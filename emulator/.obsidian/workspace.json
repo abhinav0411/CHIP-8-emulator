@@ -27,12 +27,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Computer Architecture.md",
+                "file": "CHIP-8.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Computer Architecture"
+              "title": "CHIP-8"
             }
           }
         ],
@@ -183,10 +183,10 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "fb5fc31952eacc3d",
+  "active": "c7dd4d37342b0e8e",
   "lastOpenFiles": [
-    "CHIP-8.md",
     "Computer Architecture.md",
+    "CHIP-8.md",
     "Emulator.md",
     "Untitled.canvas",
     "desktop.ini"

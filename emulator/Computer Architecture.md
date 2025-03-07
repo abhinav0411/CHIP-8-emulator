@@ -40,7 +40,6 @@ CHIP-8 follows a hexadecimal(0-9-A-F) keypad. To implement a CHIP-8 system we ne
 Here in this project we will use Python's pygame library to build the display for the CHIP-8 system. CHIP-8 has a 64x32 monochrome display.
 
 
-
 ##### Timer
 Timers in general are used to handle events like synchronizing events or process scheduling without blocking the CPU. In CHIP-8 because it does not have any interrupts timers are used to handle animation speed, physics updates, etc.
 
