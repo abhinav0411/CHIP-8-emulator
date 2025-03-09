@@ -166,3 +166,34 @@ def decode_and_execute(chip8, opcode):
         x = (opcode & 0x0F00) >> 8
         nn = (opcode & 0x00FF)
         chip8.V[x] = random.randint(0,255) & nn
+        
+    elif (opcode & 0xF000) == 0xD000:
+        x = chip8.V[(opcode & 0x0F00) >> 8] % 64
+        y = chip8.V[(opcode & 0x00F0) >> 4] % 32
+        height = opcode & 0x000F
+        chip8.V[15] = 0 
+
+        for row in range(height):
+            sprite_byte = chip8.memory[chip8.I + row]
+            for col in range(8):
+                if (sprite_byte & (0x80 >> col)) != 0: 
+                    screen_x = (x + col) % 64
+                    screen_y = (y + row) % 32
+                
+                    if chip8.display[screen_y][screen_x] == 1: 
+                        chip8.V[15] = 1
+
+                    chip8.display[screen_y][screen_x] ^= 1
+
+    elif (opcode & 0xF0FF) == 0xE09E:
+        x = (opcode & 0x0F00) >> 8
+        key = chip8.V[x]
+        if chip8.keypad[key]:
+            chip8.PC += 2
+
+    elif (opcode & 0xF0FF) == 0xE0A1:
+        x = (opcode & 0x0F00) >> 8
+        key = chip8.V[x]
+        if not (chip8.keypad[key]):
+            chip8.PC += 2
+    
