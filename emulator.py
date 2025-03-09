@@ -197,3 +197,52 @@ def decode_and_execute(chip8, opcode):
         if not (chip8.keypad[key]):
             chip8.PC += 2
     
+    elif (opcode & 0xF0FF) == 0xF007:
+        x = (opcode & 0x0F00) >> 8
+        chip8.V[x] = chip8.delay_timer
+
+    elif (opcode & 0xF0FF) == 0xF00A:
+        x = (opcode & 0x0F00) >> 8
+        key_pressed = False  
+        for i in range(16):  
+            if chip8.keypad[i]:  
+                chip8.V[x] = i  
+                key_pressed = True
+                break
+        if not key_pressed:
+            chip8.PC -= 2
+
+    elif (opcode & 0xF0FF) == 0xF015:
+        x = (opcode & 0x0F00) >> 8
+        chip8.delay_timer = chip8.V[x]
+
+    elif (opcode & 0xF0FF) == 0xF018:
+        x = (opcode & 0x0F00) >> 8
+        chip8.sound_timer = chip8.V[x]
+    
+    elif (opcode & 0xF0FF) == 0xF01E:
+        x = (opcode & 0x0F00) >> 8
+        chip8.I = chip8.V[x]
+
+    elif (opcode & 0xF0FF) == 0xF029:
+        x = (opcode & 0x0F00) >> 8
+        chip8.I = chip8.V[x] * 5
+
+    elif (opcode & 0xF0FF) == 0xF033:
+        x = (opcode & 0x0F00) >> 8
+        chip8.memory[chip8.I] = (int(chip8.V[x]) // 100)
+        chip8.memory[chip8.I+1] = (int(chip8.V[x]) % 100) // 10
+        chip8.memory[chip8.I+2] = (int(chip8.V[x]) % 10)
+
+    elif (opcode & 0xF0FF) == 0xF055:
+        x = (opcode & 0x0F00) >> 8
+
+        for i in range(x + 1):
+            chip8.memory[chip8.I + i] = chip8.V[i]
+
+    elif (opcode & 0xF0FF) == 0xF065:
+        x = (opcode & 0x0F00) >> 8
+
+        for i in range(x+1):
+            chip8.V[i] = chip8.memory[chip8.I + i]
+        
