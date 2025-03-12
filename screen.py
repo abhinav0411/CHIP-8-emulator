@@ -1,5 +1,5 @@
 #Emulator for a CHIP-8 system using Python
-
+#This file creates the window using pygame
 
 #Importing all required modules
 
@@ -9,14 +9,15 @@ import emulator
 #Pygame setup
 pygame.init()
 SCALE = 10
-screen = pygame.display.set_mode((64 * SCALE,32 * SCALE))
+screen = pygame.display.set_mode((64 * SCALE, 32 * SCALE))
 clock = pygame.time.Clock()
 running = True
+pygame.display.set_caption("CHIP-8")
 chip8 = emulator.Chip8()
 
 #Loading the ROM file
 try:
-    chip8.load_ROM("TETRIS.ch8")
+    chip8.load_ROM("testrom.ch8")
 except FileNotFoundError:
     print("File not found")
     running = False

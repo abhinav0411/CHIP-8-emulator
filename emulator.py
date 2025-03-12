@@ -1,10 +1,25 @@
 #Emulator for a CHIP-8 system using Python
-
+#This script handles the chip8 design, fetch-decode-execute loop, etc.
 
 #Importing all required modules
 
 import random
 import pygame
+
+pygame.mixer.init()
+import numpy as np
+
+# Code for generating a sound
+sample_rate = 44100
+duration = 0.2
+frequency = 440 
+
+t = np.linspace(0, duration, int(sample_rate * duration), False)
+wave = 0.5 * np.sign(np.sin(2 * np.pi * frequency * t))
+wave = np.array(wave * 32767, dtype=np.int16)
+
+sound = pygame.mixer.Sound(wave)
+
 
 #Making the class for the structure of emulator
 class Chip8:
@@ -26,6 +41,7 @@ class Chip8:
             self.delay_timer -= 1
         
         if (self.sound_timer > 0):
+            sound.play()
             self.sound_timer -=1
 
     #Function for loading fonts
@@ -87,14 +103,12 @@ def decode_and_execute(chip8, opcode):
     # nnn = (opcode & 0x0FFF)
     # N = (opcode & 0xF000) >> 12
 
-
     if (opcode == 0x00E0):  
         chip8.display = [[0] * 64 for _ in range(32)]
         chip8.PC += 2
-    
+
     elif (opcode == 0x00EE):  
         chip8.PC = chip8.stack.pop()
-        chip8.PC += 2 
     
     elif (opcode & 0xF000) == 0x1000:  
         nnn = opcode & 0x0FFF
@@ -102,15 +116,16 @@ def decode_and_execute(chip8, opcode):
 
     elif (opcode & 0xF000) == 0x2000:
         nnn = (opcode & 0x0FFF)
-        chip8.stack.append(chip8.PC)
+        chip8.stack.append(chip8.PC + 2)
         chip8.PC = nnn
 
     elif (opcode & 0xF000) == 0x3000:
         x = (opcode & 0x0F00) >> 8
         nn = (opcode & 0x00FF) 
         if chip8.V[x] == nn:
+            chip8.PC += 4
+        else:
             chip8.PC += 2
-        chip8.PC += 2 
 
     elif (opcode & 0xF000) == 0x4000:
         x = (opcode & 0x0F00) >> 8
@@ -127,86 +142,84 @@ def decode_and_execute(chip8, opcode):
             chip8.PC += 4
         else:
             chip8.PC += 2
+        
 
     elif (opcode & 0xF000) == 0x6000:
         x = (opcode & 0x0F00) >> 8
         nn = (opcode & 0x00FF) 
         chip8.V[x] = nn
         chip8.PC += 2
-        
+
 
     elif (opcode & 0xF000) == 0x7000:
         x = (opcode & 0x0F00) >> 8
         nn = (opcode & 0x00FF)
-        chip8.V[x] += nn
-        chip8.PC += 2 
+        chip8.V[x] = (chip8.V[x] + nn) & 0xFF  
+        chip8.PC += 2
 
-    elif (opcode & 0xF000) == 0x8000:
+    elif (opcode & 0xF00F) == 0x8000:
         x = (opcode & 0x0F00) >> 8
         y = (opcode & 0x00F0) >> 4
         chip8.V[x] = chip8.V[y]
-        chip8.PC += 2 
+        chip8.PC += 2
 
     elif (opcode & 0xF00F) == 0x8001:
         x = (opcode & 0x0F00) >> 8
         y = (opcode & 0x00F0) >> 4
-        chip8.V[x] = chip8.V[x] | chip8.V[y]
-        chip8.PC += 2 
+        chip8.V[x] = (chip8.V[x] | chip8.V[y]) & 0xFF
+        chip8.PC += 2
+
 
     elif (opcode & 0xF00F) == 0x8002:
         x = (opcode & 0x0F00) >> 8
         y = (opcode & 0x00F0) >> 4
-        chip8.V[x] = chip8.V[x] & chip8.V[y]
+        chip8.V[x] = (chip8.V[x] & chip8.V[y]) & 0xFF
         chip8.PC += 2
+
     
     elif (opcode & 0xF00F) == 0x8003:
         x = (opcode & 0x0F00) >> 8
         y = (opcode & 0x00F0) >> 4
         # chip8.V[x] = (chip8.V[x] | chip8.V[y]) & ~(chip8.V[x] & chip8.V[y])  -> alternate way of creating an XOR gate in Python
-        chip8.V[x] = chip8.V[x] ^ chip8.V[y]
+        chip8.V[x] = (chip8.V[x] ^ chip8.V[y]) & 0xFF
         chip8.PC += 2
+
 
     elif (opcode & 0xF00F) == 0x8004:
         x = (opcode & 0x0F00) >> 8
         y = (opcode & 0x00F0) >> 4
 
-        if (chip8.V[x] + chip8.V[y] > 0xFF):
-            chip8.V[15] = 1
-        else:
-            chip8.V[15] = 0
-
-        chip8.V[x] = ((chip8.V[x] + chip8.V[y]) & 0xFF)
-
-        chip8.PC += 2 
+        sum_result = (chip8.V[x] + chip8.V[y])
+    
+        chip8.V[x] = sum_result & 0xFF 
+        chip8.V[0xF] = 1 if (sum_result & 0x100) else 0
+        chip8.PC += 2
     
     elif (opcode & 0xF00F) == 0x8005:
         x = (opcode & 0x0F00) >> 8
         y = (opcode & 0x00F0) >> 4
-
-        if (chip8.V[x] >= chip8.V[y]):
-            chip8.V[15] = 1
-        else:
-            chip8.V[15] = 0
         
+        chip8.V[0xF] = 1 if chip8.V[x] >= chip8.V[y] else 0
         chip8.V[x] = (chip8.V[x] - chip8.V[y]) & 0xFF
+        
         chip8.PC += 2 
 
     elif (opcode & 0xF00F) == 0x8006:
         x = (opcode & 0x0F00) >> 8
-        chip8.V[15] = chip8.V[x] & 0x01
-        chip8.V[x] = chip8.V[x] >> 1
-        chip8.PC += 2 
+        chip8.V[0xF] = chip8.V[x] & 0x01  
+        chip8.V[x] >>= 1
+        chip8.PC += 2
 
     elif (opcode & 0xF00F) == 0x8007:
         x = (opcode & 0x0F00) >> 8
         y = (opcode & 0x00F0) >> 4
+        chip8.V[x] = (chip8.V[y] - chip8.V[x]) & 0xFF
 
         if (chip8.V[x] <= chip8.V[y]):
             chip8.V[15] = 1
         else:
             chip8.V[15] = 0
 
-        chip8.V[x] = (chip8.V[y] - chip8.V[x]) & 0xFF
         chip8.PC += 2 
     
     elif (opcode & 0xF00F) == 0x800E:
@@ -263,13 +276,17 @@ def decode_and_execute(chip8, opcode):
         x = (opcode & 0x0F00) >> 8
         key = chip8.V[x]
         if chip8.keypad[key]:
+            chip8.PC += 4 
+        else:
             chip8.PC += 2
 
     elif (opcode & 0xF0FF) == 0xE0A1:
         x = (opcode & 0x0F00) >> 8
         key = chip8.V[x]
         if not (chip8.keypad[key]):
-            chip8.PC += 2
+            chip8.PC += 4  # Should be +4 total
+        else:
+            chip8.PC += 2  # Missing this line
     
     elif (opcode & 0xF0FF) == 0xF007:
         x = (opcode & 0x0F00) >> 8
@@ -286,7 +303,7 @@ def decode_and_execute(chip8, opcode):
                 key_pressed = True
                 break
         if not key_pressed:
-            chip8.PC -= 2
+            chip8.PC += 2
 
     elif (opcode & 0xF0FF) == 0xF015:
         x = (opcode & 0x0F00) >> 8
@@ -318,14 +335,15 @@ def decode_and_execute(chip8, opcode):
 
     elif (opcode & 0xF0FF) == 0xF055:
         x = (opcode & 0x0F00) >> 8
-
         for i in range(x + 1):
             chip8.memory[chip8.I + i] = chip8.V[i]
+        chip8.PC += 2  # Missing this line
 
     elif (opcode & 0xF0FF) == 0xF065:
         x = (opcode & 0x0F00) >> 8
-
         for i in range(x+1):
             chip8.V[i] = chip8.memory[chip8.I + i]
-    
+        chip8.PC += 2  
+
+
         

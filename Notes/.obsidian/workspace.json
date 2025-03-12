@@ -35,8 +35,7 @@
               "title": "CHIP-8"
             }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "vertical"
@@ -183,10 +182,10 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "c7dd4d37342b0e8e",
+  "active": "2b5f7c32a238916a",
   "lastOpenFiles": [
-    "Computer Architecture.md",
     "CHIP-8.md",
+    "Computer Architecture.md",
     "Emulator.md",
     "Untitled.canvas",
     "desktop.ini"
